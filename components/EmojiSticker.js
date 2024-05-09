@@ -1,16 +1,22 @@
+import React from 'react';
 import { View, Image } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 export default function EmojiSticker({ imageSize, stickerSource }) {
+    const originalSize = useSharedValue(imageSize);
     const scaleImage = useSharedValue(imageSize);
+    
     const doubleTap = Gesture.Tap()
         .numberOfTaps(2)
         .onStart(() => {
-            if (scaleImage.value !== imageSize * 2) {
-                scaleImage.value = scaleImage.value * 2;
+            if (scaleImage.value !== imageSize) {
+                scaleImage.value = withTiming(originalSize.value);
+            } else {
+                scaleImage.value = withTiming(originalSize.value * 2);
             }
         });
+        
     const imageStyle = useAnimatedStyle(() => {
         return {
             width: withSpring(scaleImage.value),
@@ -20,21 +26,18 @@ export default function EmojiSticker({ imageSize, stickerSource }) {
 
     const translateX = useSharedValue(0);
     const translateY = useSharedValue(0);
+    
     const drag = Gesture.Pan()
-    .onChange((event) => {
-    translateX.value += event.changeX;
-    translateY.value += event.changeY;
-    });
+        .onChange((event) => {
+            translateX.value += event.translationX;
+            translateY.value += event.translationY;
+        });
 
     const containerStyle = useAnimatedStyle(() => {
         return {
             transform: [
-                {
-                    translateX: translateX.value,
-                },
-                {
-                    translateY: translateY.value,
-                },
+                { translateX: translateX.value },
+                { translateY: translateY.value },
             ],
         };
     });
